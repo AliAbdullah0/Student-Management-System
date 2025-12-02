@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <fstream>
 using namespace std;
 
 float calculateAverageMarks(int marks[]);
@@ -26,13 +27,13 @@ void sort(int rollNumbers[], string names[], int marks[][3], float averages[], c
 
 void displayTop3Students(int rollNumbers[], string names[], int marks[][3], float averages[], char grades[], int studentCount);
 
-void markStudentAttendence(int rollNumbers[], int maxDays,int studentCount, bool attendance[][30]);
+void markStudentAttendence(int maxDays,int studentCount, bool attendance[][30]);
 
 void gradeSummary(char grades[], int studentCount);
 
 void attendanceSummary(int rollNumbers[], int studentCount, bool attendance[][30]);
 
-void exportToTextFile(char grades[], int studentCount,bool attendance[][30]);
+void exportToTextFile(int rollNumbers[],char grades[], int studentCount,bool attendance[][30]);
 
 int main() {
 
@@ -84,7 +85,7 @@ int main() {
                 displayTop3Students(rollNumbers, names, marks,averages,grades, studentCount);
                 break;
             case 7:
-                markStudentAttendence(rollNumbers,MAX_DAYS,studentCount,attendance);
+                markStudentAttendence(MAX_DAYS,studentCount,attendance);
                 break;
             case 8:
                 gradeSummary(grades, studentCount);
@@ -93,7 +94,7 @@ int main() {
                 attendanceSummary(rollNumbers, studentCount,attendance);
                 break;
             case 10:
-                exportToTextFile(rollNumbers, names, marks,averages,grades, studentCount);
+                exportToTextFile(rollNumbers,grades, studentCount,attendance);
                 break;
             case 11:
                 cout<<"Exiting..."<<endl;
@@ -120,7 +121,8 @@ float calculateAverageMarks(int marks[]) {
     int sum = 0;
     for(int i = 0; i < 3; i++)
         sum += marks[i];
-    return sum / 3;
+    float avg = static_cast<float>(sum) / 3.0f;
+    return avg;
 }
 
 char calculateGrade(float average) {
@@ -311,29 +313,27 @@ void displayTop3Students(int rollNumbers[], string names[], int marks[][3], floa
     }
 }
 
-void markStudentAttendence(int rollNumbers[], int maxDays,int studentCount, bool attendance[][30])
-{
+void markStudentAttendence(int maxDays, int studentCount, bool attendance[][30]){
     int day;
-    cout<<"Enter day number (1-30): ";
-    cin>>day;
-    if(day>0 && day <maxDays){
-        cout<<"Invalid day number !"<<endl;
+    cout << "Enter day number (1-30): ";
+    cin >> day;
+    if (day < 1 || day > maxDays) {
+        cout << "Invalid day number!" << endl;
         return;
     }
-    for(int i=0;i<studentCount;i++){
-        if(attendance[i][day] == true || attendance[i][day] == false){
-            cout<<"Attendance already marked for day "<<day<<endl;
-            return;
-        }
+    day--;
+    for (int i = 0; i < studentCount; i++){
         char present;
-        cout<<"Present (P) or Absent (A): ";
-        cin>>present;
-        if(present == 'P' || present == 'p')
+        cout << "Roll No student " << i + 1 << " -> Present (P) or Absent (A): ";
+        cin >> present;
+
+        if (present == 'P' || present == 'p')
             attendance[i][day] = true;
         else
             attendance[i][day] = false;
     }
-    cout<<"Attendence marked successfully!"<<endl;
+
+    cout << "Attendance marked successfully!" << endl;
 }
 
 
@@ -380,14 +380,41 @@ void gradeSummary(char grades[], int studentCount){
     cout<<"Number of Students with F: "<<numberOfStudentsWithF<<endl;
 }
 
-void exportToTextFile(char grades[], int studentCount,bool attendance[][30]){
+void exportToTextFile(int rollNumbers[], char grades[], int studentCount, bool attendance[][30]){
     ofstream file("studentRecords.txt");
     if(!file.is_open()){
         cout<<"Error opening file!"<<endl;
         return;
     }
-    file<<attendanceSummary(rollNumbers,studentCount,attendance)<<endl;
-    file<<gradeSummary(grades,studentCount)<<endl;
+    file << "ATTENDANCE SUMMARY\n";
+    for(int i = 0; i < studentCount; i++){
+        int present = 0, absent = 0;
+        for(int j = 0; j < 30; j++){
+            if(attendance[i][j])
+                present++;
+            else
+                absent++;
+        }
+        double percentage = (present * 100.0) / (present + absent);
+        file << "Roll Number: " << rollNumbers[i]<< " Attendance %: " << percentage;
+        if(percentage < 75)file << " ** LOW ATTENDANCE **";
+        file << endl;
+    }
+    int A=0, B=0, C=0, F=0;
+
+    for(int i = 0; i < studentCount; i++){
+        if(grades[i]=='A') A++;
+        else if(grades[i]=='B') B++;
+        else if(grades[i]=='C') C++;
+        else if(grades[i]=='F') F++;
+    }
+
+    file << "\nGRADE SUMMARY\n";
+    file << "A: " << A << endl;
+    file << "B: " << B << endl;
+    file << "C: " << C << endl;
+    file << "F: " << F << endl;
+
     file.close();
     cout<<"Records exported to studentRecords.txt"<<endl;
 }
