@@ -21,7 +21,7 @@ void displayAllStudents(string names[], int marks[][3], int rollNumbers[],
 
 float averages[], char grades[], int studentCount);
 
-void deleteByRollNumber(int rollNumbers[], int &studentCount, string names[], int marks[][3], float averages[], char grades[]);
+void deleteByRollNumber(int rollNumbers[], int &studentCount, string names[], int marks[][3], float averages[], char grades[], bool attendance[][30]);
 
 void sort(int rollNumbers[], string names[], int marks[][3], float averages[], char grades[], int studentCount);
 
@@ -52,6 +52,15 @@ int main()
     int password = 1234;
     int userEnteredPassword;
     bool isLoggedIn = false;
+
+    for (int i = 0; i < MAX_STUDENTS; i++)
+    for (int j = 0; j < MAX_DAYS; j++)
+        attendance[i][j] = false;
+        
+    cout << "\033[33mInitializing Super Serious Student Management System...\033[0m\n";
+    cout << "\033[32mLoading: [##########] 100%\n\033";
+    cout << "\033[36mSystem Ready. Please behave professionally :)\033[0m\n";
+
     do
     {
         if (!isLoggedIn)
@@ -79,12 +88,11 @@ int main()
             cout << "\033[36m5. Delete By Roll Number\033[0m\n";
             cout << "\033[36m6. Display Top 3 Students\033[0m\n";
             cout << "\033[36m7. Attendance\033[0m\n";
-            cout << "\033[36m8. Grade Summary\033[0m\n";
-            cout << "\033[36m9. Attendance Summary\033[0m\n";
-            cout << "\033[33m10. Export to Text File\033[0m\n"; // yellow
-            cout << "\033[31m11. Exit\033[0m\n";                // red
+            cout << "\033[36m8. Grade Summary ( We won't judge )\033[0m\n";
+            cout << "\033[36m9. Attendance Summary ( Who Bunked The Most? )\033[0m\n";
+            cout << "\033[33m10. Export to Text File\033[0m\n";
+            cout << "\033[31m11. Exit\033[0m\n";               
             cout << "\033[36mEnter your choice: \033[0m";
-
             cin >> choice;
 
             switch (choice)
@@ -103,7 +111,7 @@ int main()
                 updateMarks(rollNumbers, studentCount, marks, averages, grades);
                 break;
             case 5:
-                deleteByRollNumber(rollNumbers, studentCount, names, marks, averages, grades);
+                deleteByRollNumber(rollNumbers, studentCount, names, marks, averages, grades,attendance);
                 break;
             case 6:
                 displayTop3Students(rollNumbers, names, marks, averages, grades, studentCount);
@@ -203,7 +211,9 @@ void addStudent(string names[], int marks[][3], int rollNumbers[], float average
     averages[studentCount] = calculateAverageMarks(marks[studentCount]);
     grades[studentCount] = calculateGrade(averages[studentCount]);
     studentCount++;
-    cout << "Student added successfully!\n";
+    cout<<endl;
+    cout << "\033[32mStudent added successfully!\033[0m\n";
+    cout<<endl;
 }
 
 void displayAllStudents(string names[], int marks[][3],
@@ -308,31 +318,42 @@ void updateMarks(int rollNumbers[], int studentCount, int marks[][3], float aver
     cout << "Roll number not found" << endl;
 }
 
-void deleteByRollNumber(int rollNumbers[], int &studentCount, string names[], int marks[][3], float averages[], char grades[])
+void deleteByRollNumber(int rollNumbers[], int &studentCount, string names[], int marks[][3], float averages[], char grades[], bool attendance[][30])
 {
     int rollNumber;
-    cout << "Enter Roll Number of student you want to delete:";
+    cout << "Enter Roll Number of student you want to delete: ";
     cin >> rollNumber;
-    if (!(checkIfRollNumberExists(rollNumber, rollNumbers, studentCount)))
+
+    int index = -1;
+    for (int i = 0; i < studentCount; i++)
+        if (rollNumbers[i] == rollNumber)
+            index = i;
+
+    if (index == -1)
     {
-        cout << "Roll Number doesn't exists!";
+        cout << "Roll Number doesn't exist!" << endl;
         return;
     }
-    for (int i = 0; i < studentCount - 1; i++)
+
+    for (int i = index; i < studentCount - 1; i++)
     {
-        if (rollNumbers[i] == rollNumber)
-        {
-            names[i] = names[i + 1];
-            for (int j = 0; j < 3; j++)
-                marks[i][j] = marks[i + 1][j];
-            averages[i] = averages[i + 1];
-            grades[i] = grades[i + 1];
-            rollNumbers[i] = rollNumbers[i + 1];
-            studentCount--;
-        }
+        rollNumbers[i] = rollNumbers[i + 1];
+        names[i] = names[i + 1];
+        averages[i] = averages[i + 1];
+        grades[i] = grades[i + 1];
+
+        for (int j = 0; j < 3; j++)
+            marks[i][j] = marks[i + 1][j];
+
+        for (int d = 0; d < 30; d++)
+            attendance[i][d] = attendance[i + 1][d];
     }
+
+    studentCount--;
+
     cout << "Deleted Successfully!\n";
 }
+
 
 void sort(int rollNumbers[], string names[], int marks[][3], float averages[], char grades[], int studentCount)
 {
